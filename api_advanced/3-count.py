@@ -7,7 +7,8 @@ import requests
 
 
 def count_words(subreddit, word_list, after=None, counts=None):
-    # First the counts dictionary
+
+    """ First the counts dictionary"""
     if counts is None:
         counts = {}
 
