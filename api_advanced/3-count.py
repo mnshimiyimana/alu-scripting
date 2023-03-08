@@ -1,12 +1,16 @@
 #!/usr/bin/python3
-"""Recursive function that queries the Reddit API, parses the title of all hot articles"""
+"""A recursive function that querries
+the reddit api, parses title
+of all hot posts, and prints
+a sorted count of given keywords.
+"""
 
 import re
 import requests
 
 
 def count_words(subreddit, word_list, after=None, counts=None):
-    # Establish the counts dictionary
+    # First the counts dictionary
     if counts is None:
         counts = {}
 
@@ -17,7 +21,7 @@ def count_words(subreddit, word_list, after=None, counts=None):
     if after:
         params['after'] = after
 
-    # Request the result from reddit api.
+    # Request of the result from reddit api.
     response = requests.get(url, headers=headers, params=params)
 
     # Read the result and retrieve the titles.
@@ -34,7 +38,7 @@ def count_words(subreddit, word_list, after=None, counts=None):
             for word in word_list:
                 word = word.lower()
 
-                # use regex to avoid panctuations around words.
+                # use regex to avoid unnecessary punctuations around words.
                 if re.search(rf'\b{word}\b', title):
                     if word in counts:
                         counts[word] += 1
@@ -46,12 +50,12 @@ def count_words(subreddit, word_list, after=None, counts=None):
         if after:
             count_words(subreddit, word_list, after=after, counts=counts)
 
-        # sort your counts in descending order.
+        # In descending order.
         else:
             sorted_counts = sorted(counts.items(), key=lambda x: (-x[1], x[0]))
             for count in sorted_counts:
                 print(f'{count[0]}: {count[1]}')
 
-    # If there is no subreddit given, print nothing.
+    # Print nothing if there is no subreddit given.
     else:
         return {}
