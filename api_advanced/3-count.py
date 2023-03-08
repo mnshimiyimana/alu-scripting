@@ -1,38 +1,58 @@
 #!/usr/bin/python3
-"""Recursively queries the Reddit API, parses the title of all hot articles, 
+"""Recursive function that queries the Reddit API, parses the title of all hot articles
 """
+
+import re
 import requests
 
 
-
-def count_words(subreddit, word_list, after=None, counts={}):
-    """
-        Recursively queries the Reddit API and passes the results to a helper function.
-    """
-    headers = {'User-Agent': 'mybot/0.0.1'}
-    url = f'https://www.reddit.com/r/{subreddit}/hot.json?limit=100'
-    
-    if after is None:
+def count_words(subreddit, word_list, after=None, counts=None):
+    """ Creating the counts dictionary """
+    if counts is None:
         counts = {}
 
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    url = f'https://www.reddit.com/r/{subreddit}/hot.json'
+    params = {'limit': 100}
+
     if after:
-        url += f'&after={after}'
-    response = requests.get(url, headers=headers, timeout=10)
-    
-    if response.status_code != 200:
-        return None
-    data = response.json()
-    for post in data['data']['children']:
-        title = post['data']['title']
-        words = title.lower().split()
-        for word in word_list:
-            word = word.lower()
-            if word in words:
-                counts[word] = counts.get(word, 0) + words.count(word)
-    after = data['data']['after']
-    if after is None:
-        sorted_counts = sorted(counts.items(), key=lambda x: (-x[1], x[0]))
-        for count in sorted_counts:
-            print(f'{count[0]}: {count[1]}')
-        return
-    count_words(subreddit, word_list, after=after, counts=counts)
+        params['after'] = after
+
+    # Request the result from reddit api.
+    response = requests.get(url, headers=headers, params=params)
+
+    # Read the result and retrieve the titles.
+    if response.status_code == 200:
+
+        data = response.json()
+        after = data['data']['after']
+        posts = data['data']['children']
+
+        for post in posts:
+            title = post['data']['title'].lower()
+
+            # Look for the given words in your title.
+            for word in word_list:
+                word = word.lower()
+
+                # use regex to avoid panctuations around words.
+                if re.search(rf'\b{word}\b', title):
+                    if word in counts:
+                        counts[word] += 1
+
+                    else:
+                        counts[word] = 1
+
+        # recurse your function.
+        if after:
+            count_words(subreddit, word_list, after=after, counts=counts)
+
+        # sort your counts in descending order.
+        else:
+            sorted_counts = sorted(counts.items(), key=lambda x: (-x[1], x[0]))
+            for count in sorted_counts:
+                print(f'{count[0]}: {count[1]}')
+
+    # If there is no subreddit given, print nothing.
+    else:
+        return {}
